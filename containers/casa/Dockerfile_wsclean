@@ -53,8 +53,7 @@
             libboost-program-options-dev libboost-system-dev \
             libcfitsio-dev libfftw3-dev libgsl-dev \
             libhdf5-dev liblapack-dev libopenmpi-dev \
-            libpython3-dev pkg-config  && \
-        rm -rf /var/lib/apt/lists/*
+            libpython3-dev pkg-config  
     
     # --- Python libraries for science and formatting ---
     RUN pip3 install \
@@ -69,8 +68,8 @@
             'numpy<2' \
             pytest \
             scipy \
-            tqdm \
-        ;
+            tqdm 
+
     
     # # --- Download LOFAR beam coefficients ---
     # RUN mkdir -p /coeffs/lobes && \
@@ -115,7 +114,7 @@
         cd /wsclean && \
         mkdir build && cd build && \
         cmake $CMAKE_ARGS .. && \
-        make install -j$(nproc) && cd / && rm -rf /wsclean
+        make install -j 2 && cd / && rm -rf /wsclean
     
     # --- [TAG: CASA] Download and install CASA (radio astronomy suite) ---
     RUN wget --no-check-certificate https://casa.nrao.edu/download/distro/casa/release/rhel/casa-6.6.0-20-py3.8.el7.tar.xz && \
@@ -135,7 +134,6 @@
     
     LABEL Author="FTSky School, Initial Version by Samit, Modified by Arpan" \
           Version="1.0" \
-          Description="Docker container  for imaging with WSClean, CASA" \
-    
+          Description="Docker container  for imaging with WSClean, CASA"
     # ---- END Dockerfile ----
     
