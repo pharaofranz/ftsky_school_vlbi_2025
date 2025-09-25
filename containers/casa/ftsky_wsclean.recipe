@@ -1,0 +1,147 @@
+# -------------------------
+# Samit Pal -Imaging Dockerfile -- translated for apptainer/singularity by Franz Kirsten
+# Ubuntu 22.04 base with scientific and radio astronomy tools
+# -------------------------
+Bootstrap: docker
+From: ubuntu:22.04
+
+%labels
+   AUTHOR "FTSky School, Initial Version by Samit, Modified by Arpan; turned into apptainer recipe by Franz Kirsten"
+   VERSION "1.0"
+   DESCRIPTION "Apptainer container  for imaging with WSClean, CASA"
+
+%environment
+ export PATH="/casa-6.6.0-20-py3.8.el7/bin:$PATH"
+ export LC_ALL=C.UTF-8
+
+%post
+    # --- Base system and dev tools ---
+   export DEBIAN_FRONTEND="noninteractive" && \
+   apt-get update && \
+   apt-get upgrade -y && \
+   apt-get -y install \
+       bison \
+       clang-format-14 \
+       cmake \
+       doxygen \
+       flex \
+       g++ \
+       gcovr \
+       gfortran \
+       git \
+       graphviz \
+       libblas-dev \
+       libboost-dev \
+       libboost-date-time-dev \
+       libboost-python-dev \
+       libboost-test-dev \
+       libgsl-dev \
+       libcfitsio-dev \
+       libfftw3-dev \
+       libgtkmm-3.0-dev \
+       libhdf5-dev \
+       libncurses-dev \
+       liblapack-dev \
+       libpng-dev \
+       libpython3-dev \
+       libreadline-dev \
+       libxml2-dev \
+       make \
+       ninja-build \
+       python3-breathe \
+       python3-casacore \
+       python3-myst-parser \
+       python3-pandas \
+       python3-pip \
+       python3-sphinx \
+       python3-sphinx-rtd-theme \
+       wcslib-dev \
+       wget \
+       cmake g++ \
+       git pkg-config libblas-dev \
+       libboost-date-time-dev libboost-filesystem-dev \
+       libboost-program-options-dev libboost-system-dev \
+       libcfitsio-dev libfftw3-dev libgsl-dev \
+       libhdf5-dev liblapack-dev libopenmpi-dev \
+       libpython3-dev pkg-config  
+   
+   #--- Python libraries for science and formatting ---
+   pip3 install \
+        aptly-api-client \
+        astropy \
+        black~=24.0 \
+        cmake-format \
+        h5py \
+        isort \
+        lofarantpos \
+        matplotlib \
+        'numpy<2' \
+        pytest \
+        scipy \
+        tqdm 
+
+    
+    # # --- Download LOFAR beam coefficients ---
+    mkdir -p /coeffs/lobes && \
+     wget -P /coeffs/lobes -r -nH -nd --no-parent -A 'LOBES_*.h5' https://support.astron.nl/software/lobes/
+    
+    # --- Casacore data setup ---
+    mkdir -p /usr/share/casacore/data && \
+     ln -s /usr/share/casacore /var/lib/casacore && \
+     wget -qO - https://www.astron.nl/iers/WSRT_Measures.ztar | \
+        tar -C /usr/share/casacore/data -xzf -
+    
+    # --- [TAG: casacore] Build recent casacore (C++20 support) ---
+    mkdir /external && \
+     cd /external && \
+     git clone https://github.com/casacore/casacore.git && \
+     cd /external/casacore && \
+     git checkout v3.6.0 && \
+     mkdir build && \
+     cd build && \
+     cmake .. -DBUILD_PYTHON=OFF -DBUILD_TESTING=OFF -DDATA_DIR=/usr/share/casacore/data && \
+     make -j 4 && \
+     make install -j 4 && \
+     cd /external && \
+     rm -rf /external/casacore
+    
+    # --- [TAG: EveryBeam] Install EveryBeam for beam modeling ---
+    git clone --depth 1 --recurse-submodules --branch v0.7.2 https://git.astron.nl/RD/EveryBeam.git /EveryBeam && \
+     cd /EveryBeam && \
+     mkdir build && cd build && \
+     cmake $CMAKE_ARGS .. && \
+     make install -j 4 && cd / && rm -rf /EveryBeam
+    
+    # --- [TAG: IDG] Install IDG for fast gridding ---
+    git clone --depth 1 https://git.astron.nl/RD/idg.git /idg && \
+     cd /idg && \
+     mkdir build && cd build && \
+     cmake $CMAKE_ARGS .. && \
+     make install -j 4 && cd / && rm -rf /idg
+    
+    # --- [TAG: WSClean] Install WSClean for imaging ---
+    git clone --depth 1 --branch v3.6 https://gitlab.com/aroffringa/wsclean.git /wsclean && \
+     cd /wsclean && \
+     mkdir build && cd build && \
+     cmake $CMAKE_ARGS .. && \
+     make install -j 4 && cd / && rm -rf /wsclean
+    
+    # --- [TAG: CASA] Download and install CASA (radio astronomy suite) ---
+    wget --no-check-certificate https://casa.nrao.edu/download/distro/casa/release/rhel/casa-6.6.0-20-py3.8.el7.tar.xz && \
+     tar xf casa-6.6.0-20-py3.8.el7.tar.xz && \
+     rm -rf casa-6.6.0-20-py3.8.el7.tar.xz
+    
+    # Add FUSE and readline support for GUI tools and better terminal interaction
+    apt-get update && \
+     apt-get install -y fuse libfuse2 libreadline8 libreadline-dev rlwrap && \
+     rm -rf /var/lib/apt/lists/*
+    
+    # Add a mount point
+    mkdir /data
+
+%help
+  Invoke with --fakeroot to enable fuse support.
+  Add --env DISPLAY=$DISPLAY if x-forwarding does not work work
+  In case casaviewer image is empty and error are display on the terminal,
+  may need to run 'xhost +local:root' or 'xhost +local:apptainer' before starting the
+  container.
