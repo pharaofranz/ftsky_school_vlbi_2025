@@ -67,7 +67,8 @@ From: ubuntu:24.04
        libpython3-dev pkg-config  \
        python3-aptly-api-client python3-astropy python3-h5py python3-isort \
        python3-matplotlib python3-pytest python3-scipy python3-tqdm \
-       python3-natsort
+       python3-natsort \
+       curl
    
    #--- Python libraries for science and formatting ---
    pip3 install --break-system-packages \
@@ -129,7 +130,7 @@ From: ubuntu:24.04
      tar xf casa-6.6.0-20-py3.8.el7.tar.xz && \
      rm -rf casa-6.6.0-20-py3.8.el7.tar.xz
     # install astropy directly into casa as per https://casadocs.readthedocs.io/en/latest/notebooks/frequently-asked-questions.html
-    /casa-6.6.0-20-py3.8.el7/bin/pip3 install astropy
+    /casa-6.6.0-20-py3.8.el7/bin/pip3 install astropy natsort
 
 
     # Add FUSE and readline support for GUI tools and better terminal interaction
