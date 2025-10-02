@@ -32,8 +32,8 @@ onload = function(){
 
 # FTSky VLBI workshop 2025
 
-Welcome! This page hosts the **VLBI tutorial materials** and **guides** from the **FTSky
-Workshop**, held at **ICTS Bengaluru** on **06–10 October 2025**.
+Welcome! This page hosts the VLBI tutorial material and guide from the FTSky
+Workshop, held at on 06–10 October 2025.
 
 I recommend to simply clone this repository and then work in the `tutorial` directory:
 
@@ -65,7 +65,7 @@ First download the data from the EVN archive as indicated below. We'll need the 
 fitsidi files as well as the system temperature files and the automatically generated flag
 files.
 
-**Ideally you download all of this before the tutorial.**
+<span style="color:red"> **Ideally you download all of this before the tutorial.** </span>
 
 In total you'll need some 35GB of free space on your laptop.
 
