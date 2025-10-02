@@ -3,7 +3,7 @@
 # Ubuntu 22.04 base with scientific and radio astronomy tools
 # -------------------------
 Bootstrap: docker
-From: ubuntu:22.04
+From: ubuntu:24.04
 
 %labels
    AUTHOR "FTSky School, Initial Version by Samit, Modified by Arpan; turned into apptainer recipe by Franz Kirsten"
@@ -13,6 +13,7 @@ From: ubuntu:22.04
 %environment
  export PATH="/casa-6.6.0-20-py3.8.el7/bin:$PATH"
  export LC_ALL=C.UTF-8
+ export PYTHONPATH="/casa-vlbi:$PYTHONPATH"
 
 %post
     # --- Base system and dev tools ---
@@ -63,22 +64,19 @@ From: ubuntu:22.04
        libboost-program-options-dev libboost-system-dev \
        libcfitsio-dev libfftw3-dev libgsl-dev \
        libhdf5-dev liblapack-dev libopenmpi-dev \
-       libpython3-dev pkg-config  
+       libpython3-dev pkg-config  \
+       python3-aptly-api-client python3-astropy python3-h5py python3-isort \
+       python3-matplotlib python3-pytest python3-scipy python3-tqdm \
+       python3-natsort
    
    #--- Python libraries for science and formatting ---
-   pip3 install \
-        aptly-api-client \
-        astropy \
+   pip3 install --break-system-packages \
         black~=24.0 \
         cmake-format \
-        h5py \
-        isort \
         lofarantpos \
-        matplotlib \
-        'numpy<2' \
-        pytest \
-        scipy \
-        tqdm 
+        'numpy<2' 
+
+
 
     
     # # --- Download LOFAR beam coefficients ---
@@ -100,7 +98,7 @@ From: ubuntu:22.04
      mkdir build && \
      cd build && \
      cmake .. -DBUILD_PYTHON=OFF -DBUILD_TESTING=OFF -DDATA_DIR=/usr/share/casacore/data && \
-     make -j 4 && \
+     make -j 40 && \
      make install -j 4 && \
      cd /external && \
      rm -rf /external/casacore
@@ -130,7 +128,10 @@ From: ubuntu:22.04
     wget --no-check-certificate https://casa.nrao.edu/download/distro/casa/release/rhel/casa-6.6.0-20-py3.8.el7.tar.xz && \
      tar xf casa-6.6.0-20-py3.8.el7.tar.xz && \
      rm -rf casa-6.6.0-20-py3.8.el7.tar.xz
-    
+    # install astropy directly into casa as per https://casadocs.readthedocs.io/en/latest/notebooks/frequently-asked-questions.html
+    /casa-6.6.0-20-py3.8.el7/bin/pip3 install astropy
+
+
     # Add FUSE and readline support for GUI tools and better terminal interaction
     apt-get update && \
      apt-get install -y fuse libfuse2 libreadline8 libreadline-dev rlwrap && \
@@ -138,6 +139,9 @@ From: ubuntu:22.04
     
     # Add a mount point
     mkdir /data
+
+    # add vlbitools from JIVE
+    git clone https://github.com/jive-vlbi/casa-vlbi
 
 %help
   Invoke with --fakeroot to enable fuse support.
