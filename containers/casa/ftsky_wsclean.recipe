@@ -141,7 +141,4 @@ From: ubuntu:22.04
 
 %help
   Invoke with --fakeroot to enable fuse support.
-  Add --env DISPLAY=$DISPLAY if x-forwarding does not work work
-  In case casaviewer image is empty and error are display on the terminal,
-  may need to run 'xhost +local:root' or 'xhost +local:apptainer' before starting the
-  container.
+  Add --env DISPLAY=$DISPLAY if x-forwarding does not work
