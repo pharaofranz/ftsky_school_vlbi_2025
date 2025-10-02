@@ -65,7 +65,7 @@ First download the data from the EVN archive as indicated below. We'll need the 
 fitsidi files as well as the system temperature files and the automatically generated flag
 files.
 
-**Ideally you download all of this before the tutorial.**
+> **Ideally you download all of this before the tutorial.**
 
 In total you'll need some 35GB of free space on your laptop.
 
@@ -79,7 +79,8 @@ gunzip ek048d.antab.gz
 ## How to handle the containers
 We prepared both docker and apptainer containers for your convencience. They contain all
 the software that you'll need.
-**Please make sure to have either of them on your laptop before the tutorial.**
+
+> **Please make sure to have either of them on your laptop before the tutorial.**
 
 ### Docker
 - install docker following the [installation instructions](https://docs.docker.com/engine/install/)
