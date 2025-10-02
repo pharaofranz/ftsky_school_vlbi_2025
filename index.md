@@ -241,15 +241,15 @@ finder -- we'll correct for this offest.
   [Figure 2](#fig-2))
 
 ```python
-plotms(vis=CONT, gridrows=4, gridcols=4,
-       xaxis='channel', yaxis='amp', field='J0530+1331',
+plotms(vis=CONT, gridrows=2, gridcols=3,
+       xaxis='frequency', yaxis='phase', field='J0530+1331',
        timerange='15:02:00.0~15:03:00.0', avgtime='60',
-       iteraxis='spw', coloraxis='baseline', correlation='RR, LL')
+       iteraxis='baseline', coloraxis='spw', correlation='RR', antenna='EF')
 ```
 <img src="figures/ff-phase-data.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
 
 <a name="fig-1">**Figure 1**</a> - *Uncalibrated phases of the fringe finder. Each panel
-is a different subband (IF) and the baselines are color coded. Slopes and offsets between
+is a different baselines with Effelsberg and the subbands (IFs) are color coded. Slopes and offsets between
 bands are obvious. They are caused by instrumental delays and imperfections in the
 correlator model.*
 
@@ -280,21 +280,23 @@ applycal(vis=CONT, field='J0530+1331',
 - and take a look at the outcome ([Figure 3](#fig-3))
 
 ```python
-plotms(vis=CONT, gridrows=4, gridcols=4, xaxis='channel', yaxis='phase',
-       field='J0530+1331', timerange='15:02:00.0~15:03:00.0',
-       avgtime='60', iteraxis='spw', coloraxis='baseline',
-       correlation='RR, LL', ydatacolumn='corrected')
+plotms(vis=CONT, gridrows=2, gridcols=3, xaxis='frequency', yaxis='phase',
+       field='J0530+1331',timerange='15:02:00.0~15:03:00.0',
+       avgtime='60', iteraxis='baseline', coloraxis='spw',
+       correlation='RR', antenna='EF',
+       ydatacolumn='corrected')
 ```
 
-<img src="figures/ff-phase-corrected.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
+<img src="figures/ff-phase-corrected-sbd.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
 
 <a name="fig-3">**Figure 3**</a> - *Same as [Figure 1](#fig-1) but with instrumental
-delays corrected. The phases are now mostly flat and centered around zero.*
+delays corrected. The phases are now mostly flat, centered around zero and "connected"
+across the band.*
 
 
 #### Global fringe fitting
 Now we can move ahead and solve for delays and rates across the entire observations for
-the phase calibrator.
+the phase calibrator and the fringe finder.
 
 - We run global fringe fit, applying all previous calibration on the fly and ask for one
   solution per phase calibrator scan (note how we average over all IFs to increase the
@@ -312,10 +314,11 @@ fringefit(vis=CONT, caltable='cont.mbd', field='J0502+2516, J0530+1331',
   solutions because we obtained only one set of solutions by averaging over all subbands)
 
 ```python
+nspw = 16
 applycal(vis=CONT, field='J0502+2516, J0530+1331',
          gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd', 'cont.mbd'],
          interp=['nearest','nearest,nearest', 'nearest', 'linear'],
-         parang=True, spwmap=[[],[],[],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]])
+         parang=True, spwmap=[[],[],[], nspw * [0]])
 ```
 
 - Plot the calibrated phases, but only on Effelsberg baselines ([Figure 4](#fig-4)). We
@@ -344,7 +347,7 @@ again running on a bright, flat-spectrum source such as our fringe finder:
 bandpass(vis=CONT, caltable='cont.bpass', field='J0530+1331',
          gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd', 'cont.mbd'],
          interp=['nearest','nearest,nearest', 'nearest', 'linear'],
-         spwmap=[[],[],[],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
+         spwmap=[[],[],[],nspw * [0]],
          solnorm=True, solint='inf', refant='EF', bandtype='B',
          parang=True,
          minblperant=1)
@@ -363,22 +366,38 @@ plotms(vis='cont.bpass', xaxis='frequency', yaxis='amp',
 data of the fringe finder.*
 
 
-
-- And we can plot the fully calibrated amplitudes of the phase calibrator. Here
-  we restrict outselves to the baselines that involve the Effelsberg telescopy ([Figure 6](#fig-6)).
+- We can now apply all of the calibration, including the bandpass table to both the fringe
+  finder and the phase calibrator:
 
 ```python
-plotms(vis=CONT, gridrows=4, gridcols=4, xaxis='channel', yaxis='amp',
-       field='J0502+2516', avgtime='60', iteraxis='scan',
-       coloraxis='corr', correlation='RR, LL',
-       ydatacolumn='corrected',
-       avgchannel='8', antenna='EF')
+applycal(vis=CONT, field='J0502+2516, J0530+1331',
+         gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd', 'cont.mbd', 'cont.bpass'],
+         interp=['nearest','nearest,nearest', 'nearest', 'linear', 'nearest,nearest'],
+         spwmap=[[],[],[], 16 * [0], []], parang=True)
 ```
 
-<img src="figures/pcal-amp-corrected.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
+- And we can plot the fully calibrated amplitudes of the fringe finder. Here
+  we again restrict outselves to the baselines that involve the Effelsberg telescopy
+  ([Figure 6](#fig-6) and [Figure 7](#fig-7)).
 
-<a name="fig-6">**Figure 6**</a> - *Fully calibrated amplitudes of the phase calibrator
-per scan on all baselines involving the Effelsberg telescope.*
+```python
+plotms(vis=CONT, gridrows=2, gridcols=3, xaxis='frequency', yaxis='phase',
+       field='J0530+1331',timerange='15:02:00.0~15:03:00.0',
+       avgtime='60', iteraxis='baseline', coloraxis='spw',
+       correlation='RR', antenna='EF',
+       ydatacolumn='corrected')
+```
+
+<img src="figures/ff-amp-corrected-pbass.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
+
+<a name="fig-6">**Figure 6**</a> - *Fully calibrated amplitudes of the fringe finder on
+all Effelsberg baselines. Compare this to [Figure 2](#fig-2). There is certainly room for
+improvement or more flagging but this is certainly "good enough".*
+
+<img src="figures/ff-phase-corrected-pbass.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
+
+<a name="fig-7">**Figure 7**</a> - *Same as [Figure 6](#fig-6) but for the phases. Now
+they are all flat.*
 
 
 
@@ -396,7 +415,7 @@ of our astrometry. We will now use it to check if our calibration was successful
 applycal(vis=CONT, field='J0501+2530',
          gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd', 'cont.mbd', 'cont.bpass'],
          interp=['nearest','nearest,nearest', 'nearest', 'linear', 'nearest,nearest'],
-         spwmap=[[],[],[],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[]],
+         spwmap=[[],[],[], nspw * [0],[]],
          parang=True)
 ```
 
@@ -421,14 +440,14 @@ tclean(vis=CHKSRC, imagename='chksrc.image', specmode='mfs', nterms=1,
 ```
 
 - Take a look at the output with `imview`. The file you'll want to look at is called
-  `chksrc.image.image` ([Figure 7](#fig-7))
+  `chksrc.image.image` ([Figure 8](#fig-8))
 
 <img src="figures/chksrc-CLEANed.png" alt="drawing" style="width: 60%;height: auto;" class="center"/>
 
-<a name="fig-7">**Figure 7**</a> - *CLEANed image of the check source.*
+<a name="fig-8">**Figure 8**</a> - *CLEANed image of the check source.*
 
 #### Finally image the target FRB
-Since we're happy with our calibration -- the check source is a lovely point source -- we
+Since we're happy with our calibration -- the check source is a lovely point source located at the right position -- we
 can now apply the calibration to our gated target data and image it.
 
 - apply calibration to target -- make sure to use the correct gcal and tsys
@@ -438,7 +457,7 @@ applycal(vis=GATE, field='R67_D',
          gaintable=['r67.gcal', 'r67.tsys', 'cont.sbd', 'cont.mbd', 'cont.bpass'],
          interp=['nearest','nearest,nearest', 'nearest', 'linear', 'nearest,nearest'],
          parang=True,
-         spwmap=[[],[],[],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[]])
+         spwmap=[[],[],[],nspw * [0], []])
 ```
 
 - In case of the targets, we do not run a full CLEAN on the data because, well, all we
@@ -452,16 +471,16 @@ for i in range(1,14):
            specmode='mfs', nterms=1, deconvolver='hogbom', gridder='standard',
            imsize=1024, cell='5mas', weighting='natural', niter=0,
            savemodel='modelcolumn', restart=False,
-           antenna='5&0; 5&1; 5&2; 5&3; 5&4')
+           antenna='EF&O8; EF&TR; EF&WB; EF&NT')
 ```
 
 - you can again take a look at the individual bursts with `imview`. The files will be
-  called `burst[1-13].image.image` (see [Figure 8](#fig-8) for the dirty image of Burst 1.)
+  called `burst[1-13].image.image` (see [Figure 9](#fig-9) for the dirty image of Burst 1.)
 
 
 <img src="figures/burst1_dirty.png" alt="drawing" style="width: 60%;height: auto;" class="center"/>
 
-<a name="fig-8">**Figure 8**</a> - *Dirty image of burst 1. Note the cross pattern that
+<a name="fig-9">**Figure 9**</a> - *Dirty image of burst 1. Note the cross pattern that
 shows that the signal is dominated by two baselines.*
 
 - As you can see, we do not get a clear localisation with just a single burst. What we see
@@ -476,18 +495,27 @@ tclean(vis=GATE, scan='1~4,6~13', imagename='burst_all_but5.image',
        specmode='mfs', nterms=1, deconvolver='hogbom', gridder='standard',
        imsize=1024, cell='5mas', weighting='natural', niter=0,
        savemodel='modelcolumn', restart=False,
-       antenna='5&0; 5&1; 5&2; 5&3; 5&4')
+       antenna='EF&O8; EF&TR; EF&WB; EF&NT')
 ```
 
-- And TADA, we do get a single peak in the dirty image ([Figure 9](#fig-9)).
+- And TADA, we do get a single peak in the dirty image ([Figure 10](#fig-10)).
 <img src="figures/burst_all_but5_dirty.png" alt="drawing" style="width: 60%;height: auto;" class="center"/>
 
-<a name="fig-9">**Figure 9**</a> - *Dirty image of all 12 bursts combined (we're ignoring
-burst 5 here). The combination of fursts occuring at different times leads to a more
+<a name="fig-10">**Figure 10**</a> - *Dirty image of all 12 bursts combined (we're ignoring
+burst 5 here). The combination of bursts occuring at different times leads to a more
 filled uv-plane and, eventually, gives us a single peak in the dirty image. This is the
 precise localisation of the target source.*
 
 ```
+
+## Bonus questions
+- In [Figure 9](#fig-9) we see that two baselines dominate the cross pattern. Which
+  baselines are these and how would you figure it out?
+- Make the same image as [Figure 10](#fig-10) but including all baselines. In what way are
+  the images different/similar and why?
+- Why is the check-source in the middle of the created figure ([Figure 8](#fig-8)) while
+  the FRB-source is not ([Figure 10](#fig-10))?
+
 
 ## Resources
 The calibration steps above are largely just following what other tutorials have done

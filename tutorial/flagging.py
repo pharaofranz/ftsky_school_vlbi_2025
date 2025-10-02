@@ -1,7 +1,6 @@
 CONT='ek048d_cont.ms'
 GATE='ek048d_gate.ms'
 MSs = [CONT, GATE]
-MSs = [GATE]
 for MS in MSs:
     flagdata(vis=MS, mode='list', inpfile='ek048d.flag', reason='any', action='apply', flagbackup=True, savepars=False)
     flagdata(vis=MS, mode='manual', antenna='IR', correlation='RR', action='apply', flagbackup=True, savepars=False)
