@@ -103,7 +103,9 @@ xhost +local:root
   `gmrt_data`. I.e. you can also just attach to the same container again.
 
 ```bash
-docker run -it --name ftsky --privileged -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 -v /tmp/.X11-unix:/tmp/.X11-unix --ipc=host -v $(pwd):/data apal52/radio-img
+docker run -it --name ftsky --privileged -e DISPLAY=$DISPLAY \
+   -e QT_X11_NO_MITSHM=1 -v /tmp/.X11-unix:/tmp/.X11-unix --ipc=host \
+   -v $(pwd):/data apal52/radio-img
 ```
 
 - test if things are working correctly:
@@ -239,9 +241,9 @@ finder -- we'll correct for this offest.
 
 ```python
 plotms(vis=CONT, gridrows=4, gridcols=4,
-xaxis='channel', yaxis='amp', field='J0530+1331',
-timerange='15:02:00.0~15:03:00.0', avgtime='60',
-iteraxis='spw', coloraxis='baseline', correlation='RR, LL')
+       xaxis='channel', yaxis='amp', field='J0530+1331',
+       timerange='15:02:00.0~15:03:00.0', avgtime='60',
+       iteraxis='spw', coloraxis='baseline', correlation='RR, LL')
 ```
 <img src="figures/ff-phase-data.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
 
@@ -258,19 +260,29 @@ correlator model.*
   correction.
 
 ```python
-fringefit(vis=CONT, caltable='cont.sbd', timerange='15:02:00.0~15:03:00.0', solint='inf', zerorates=True, refant='EF', minsnr=10, gaintable=['cal.gcal', 'cal.tsys'], interp=['nearest','nearest,nearest'], parang=True)
+fringefit(vis=CONT, caltable='cont.sbd', timerange='15:02:00.0~15:03:00.0',
+          solint='inf', zerorates=True, refant='EF', minsnr=10,
+          gaintable=['cal.gcal', 'cal.tsys'],
+          interp=['nearest','nearest,nearest'],
+          parang=True)
 ```
 
 - we apply the single band delay corrections to the fringe finder
 
 ```python
-applycal(vis=CONT, field='J0530+1331', gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd'], interp=['nearest','nearest,nearest', 'nearest'], parang=True)
+applycal(vis=CONT, field='J0530+1331',
+         gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd'],
+         interp=['nearest','nearest,nearest', 'nearest'],
+         parang=True)
 ```
 
 - and take a look at the outcome ([Figure 3](#fig-3))
 
 ```python
-plotms(vis=CONT, gridrows=4, gridcols=4, xaxis='channel', yaxis='phase', field='J0530+1331', timerange='15:02:00.0~15:03:00.0', avgtime='60', iteraxis='spw', coloraxis='baseline', correlation='RR, LL', ydatacolumn='corrected')
+plotms(vis=CONT, gridrows=4, gridcols=4, xaxis='channel', yaxis='phase',
+       field='J0530+1331', timerange='15:02:00.0~15:03:00.0',
+       avgtime='60', iteraxis='spw', coloraxis='baseline',
+       correlation='RR, LL', ydatacolumn='corrected')
 ```
 
 <img src="figures/ff-phase-corrected.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
@@ -288,21 +300,31 @@ the phase calibrator.
   signal-to-noise by passing `combine='spws'`):
 
 ```python
-fringefit(vis=CONT, caltable='cont.mbd', field='J0502+2516, J0530+1331', solint='120s', zerorates=False, refant='EF', minsnr=7, combine='spw', gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd'], interp=['nearest','nearest,nearest', 'nearest'], parang=True)
+fringefit(vis=CONT, caltable='cont.mbd', field='J0502+2516, J0530+1331',
+          solint='120s', zerorates=False, refant='EF', minsnr=7, combine='spw',
+          gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd'],
+          interp=['nearest','nearest,nearest', 'nearest'],
+          parang=True)
 ```
 
 - apply the fringe fit calibration (we have to specify how to apply the global fringe fit
   solutions because we obtained only one set of solutions by averaging over all subbands)
 
 ```python
-applycal(vis=CONT, field='J0502+2516, J0530+1331', gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd', 'cont.mbd'], interp=['nearest','nearest,nearest', 'nearest', 'linear'], parang=True, spwmap=[[],[],[],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]])
+applycal(vis=CONT, field='J0502+2516, J0530+1331',
+         gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd', 'cont.mbd'],
+         interp=['nearest','nearest,nearest', 'nearest', 'linear'],
+         parang=True, spwmap=[[],[],[],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]])
 ```
 
 - Plot the calibrated phases, but only on Effelsberg baselines ([Figure 4](#fig-4)). We
   generate one plot per scan to see if there are scans with failed calibration.
 
 ```python
-plotms(vis=CONT, gridrows=4, gridcols=4, xaxis='channel', yaxis='phase', field='J0502+2516', avgtime='60', iteraxis='scan', coloraxis='corr', correlation='RR, LL',ydatacolumn='corrected', avgchannel='8', antenna='EF')
+plotms(vis=CONT, gridrows=4, gridcols=4, xaxis='channel', yaxis='phase',
+       field='J0502+2516', avgtime='60', iteraxis='scan', coloraxis='corr',
+       correlation='RR, LL',ydatacolumn='corrected',
+       avgchannel='8', antenna='EF')
 ```
 
 <img src="figures/pcal-phase-corrected.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
@@ -318,13 +340,20 @@ As each subband has a certain spectral response, we will create a bandpass calib
 again running on a bright, flat-spectrum source such as our fringe finder:
 
 ```python
-bandpass(vis=CONT, caltable='cont.bpass', field='J0530+1331', gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd', 'cont.mbd'], interp=['nearest','nearest,nearest', 'nearest', 'linear'], solnorm=True, solint='inf', refant='EF', bandtype='B', spwmap=[[],[],[],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]], parang=True, minblperant=1)
+bandpass(vis=CONT, caltable='cont.bpass', field='J0530+1331',
+         gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd', 'cont.mbd'],
+         interp=['nearest','nearest,nearest', 'nearest', 'linear'],
+         spwmap=[[],[],[],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
+         solnorm=True, solint='inf', refant='EF', bandtype='B',
+         parang=True,
+         minblperant=1)
 ```
 
 - we can plot the results ([Figure 5](#fig-5)):
 
 ```python
-plotms(vis='cont.bpass', xaxis='frequency', yaxis='amp', coloraxis='corr', iteraxis='antenna', gridrows=2, gridcols=4)
+plotms(vis='cont.bpass', xaxis='frequency', yaxis='amp',
+       coloraxis='corr', iteraxis='antenna', gridrows=2, gridcols=4)
 ```
 
 <img src="figures/bpass.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
@@ -338,9 +367,11 @@ data of the fringe finder.*
   we restrict outselves to the baselines that involve the Effelsberg telescopy ([Figure 6](#fig-6)).
 
 ```python
-plotms(vis=CONT, gridrows=4, gridcols=4, xaxis='channel', yaxis='amp', field='J0502+2516',
-avgtime='60', iteraxis='scan', coloraxis='corr', correlation='RR, LL',
-ydatacolumn='corrected', avgchannel='8', antenna='EF')
+plotms(vis=CONT, gridrows=4, gridcols=4, xaxis='channel', yaxis='amp',
+       field='J0502+2516', avgtime='60', iteraxis='scan',
+       coloraxis='corr', correlation='RR, LL',
+       ydatacolumn='corrected',
+       avgchannel='8', antenna='EF')
 ```
 
 <img src="figures/pcal-amp-corrected.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
@@ -361,23 +392,34 @@ of our astrometry. We will now use it to check if our calibration was successful
 - apply the calibration to the check source
 
 ```python
-applycal(vis=CONT, field='J0501+2530', gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd', 'cont.mbd', 'cont.bpass'], interp=['nearest','nearest,nearest', 'nearest', 'linear', 'nearest,nearest'], parang=True, spwmap=[[],[],[],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[]])
+applycal(vis=CONT, field='J0501+2530',
+         gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd', 'cont.mbd', 'cont.bpass'],
+         interp=['nearest','nearest,nearest', 'nearest', 'linear', 'nearest,nearest'],
+         spwmap=[[],[],[],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[]],
+         parang=True)
 ```
 
 - For quicker and easier imaging, we split out the check source and create a new
   measurement set that only contains the calibrated data. We also apply some averaging on the fly:
 
 ```python
-split(vis=CONT, outputvis='chksrc.ms', field='J0501+2530', correlation='RR, LL', datacolumn='corrected', keepflags=False, width='4', timebin='32s')
+split(vis=CONT, outputvis='chksrc.ms', field='J0501+2530',
+      correlation='RR, LL', datacolumn='corrected',
+      keepflags=False,
+      width='4', timebin='32s')
 ```
 
 - We can now image the check source, we restrict ourselves to all Eff-baselines.
 
 ```python
-tclean(vis=CHKSRC, imagename='chksrc.image', specmode='mfs', nterms=1, deconvolver='hogbom', gridder='standard', imsize=128, cell='5mas', weighting='natural', niter=100, interactive=True, savemodel='modelcolumn', restart=False, antenna='5&0; 5&1; 5&2; 5&3; 5&4')
+tclean(vis=CHKSRC, imagename='chksrc.image', specmode='mfs', nterms=1,
+       deconvolver='hogbom', gridder='standard', imsize=128, cell='5mas',
+       weighting='natural', niter=100, interactive=False, savemodel='modelcolumn',
+       restart=False,
+       antenna='5&0; 5&1; 5&2; 5&3; 5&4')
 ```
 
-- take a look at the output with `imview`. The file you'll want to look at is called
+- Take a look at the output with `imview`. The file you'll want to look at is called
   `chksrc.image.image` ([Figure 7](#fig-7))
 
 <img src="figures/chksrc-CLEANed.png" alt="drawing" style="width: 60%;height: auto;" class="center"/>
@@ -391,7 +433,11 @@ can now apply the calibration to our gated target data and image it.
 - apply calibration to target -- make sure to use the correct gcal and tsys
 
 ```python
-applycal(vis=GATE, field='R67_D', gaintable=['r67.gcal', 'r67.tsys', 'cont.sbd', 'cont.mbd', 'cont.bpass'], interp=['nearest','nearest,nearest', 'nearest', 'linear', 'nearest,nearest'], parang=True, spwmap=[[],[],[],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[]])
+applycal(vis=GATE, field='R67_D',
+         gaintable=['r67.gcal', 'r67.tsys', 'cont.sbd', 'cont.mbd', 'cont.bpass'],
+         interp=['nearest','nearest,nearest', 'nearest', 'linear', 'nearest,nearest'],
+         parang=True,
+         spwmap=[[],[],[],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[]])
 ```
 
 - In case of the targets, we do not run a full CLEAN on the data because, well, all we
@@ -400,12 +446,16 @@ for all bursts individually. Again, we restrict ourselves to the Eff baselines. 
 convenience we run the imaging in a for loop, looping over the bursts (or scans here):
 
 ```python
-for i in range(1,14):tclean(vis=GATE, scan=str(i), imagename='burst'+str(i)+'.image', specmode='mfs', nterms=1, deconvolver='hogbom', gridder='standard', imsize=1024, cell='5mas', weighting='natural', niter=0, savemodel='modelcolumn', restart=False, antenna='5&0; 5&1; 5&2; 5&3; 5&4')
+for i in range(1,14):
+    tclean(vis=GATE, scan=str(i), imagename='burst'+str(i)+'.image',
+           specmode='mfs', nterms=1, deconvolver='hogbom', gridder='standard',
+           imsize=1024, cell='5mas', weighting='natural', niter=0,
+           savemodel='modelcolumn', restart=False,
+           antenna='5&0; 5&1; 5&2; 5&3; 5&4')
 ```
 
 - you can again take a look at the individual bursts with `imview`. The files will be
-  called `burst[1-13].image.image` (see [Figure 8](#fig-8) for the dirty image of Burst 1
-  in scan 1.)
+  called `burst[1-13].image.image` (see [Figure 8](#fig-8) for the dirty image of Burst 1.)
 
 
 <img src="figures/burst1_dirty.png" alt="drawing" style="width: 60%;height: auto;" class="center"/>
@@ -421,11 +471,15 @@ shows that the signal is dominated by two baselines.*
 - If we're lucky, combining all bursts will give us an unambiguous localisation:
 
 ```python
-tclean(vis=GATE, scan='1~4,6~13', imagename='burst_all_but5.image', specmode='mfs', nterms=1, deconvolver='hogbom', gridder='standard', imsize=1024, cell='5mas', weighting='natural', niter=0, savemodel='modelcolumn', restart=False, antenna='5&0; 5&1; 5&2; 5&3; 5&4')
+tclean(vis=GATE, scan='1~4,6~13', imagename='burst_all_but5.image',
+       specmode='mfs', nterms=1, deconvolver='hogbom', gridder='standard',
+       imsize=1024, cell='5mas', weighting='natural', niter=0,
+       savemodel='modelcolumn', restart=False,
+       antenna='5&0; 5&1; 5&2; 5&3; 5&4')
 ```
 
 - And TADA, we do get a single peak in the dirty image ([Figure 9](#fig-9)).
-<img src="figures/burst1_dirty.png" alt="drawing" style="width: 60%;height: auto;" class="center"/>
+<img src="figures/burst_all_but5_dirty.png" alt="drawing" style="width: 60%;height: auto;" class="center"/>
 
 <a name="fig-9">**Figure 9**</a> - *Dirty image of all 12 bursts combined (we're ignoring
 burst 5 here). The combination of fursts occuring at different times leads to a more
@@ -433,13 +487,6 @@ filled uv-plane and, eventually, gives us a single peak in the dirty image. This
 precise localisation of the target source.*
 
 ```
-- plots to add:
-  - dirty image of combined bursts
-  - dirty image of first burst
-  - clean image of check source
-  - clean image of pcal?
-  - example of calibrated phases
-  - example of bandpass
 
 ## Resources
 The calibration steps above are largely just following what other tutorials have done
