@@ -51,8 +51,9 @@ in the `tutorial` directory across.
 2. [Download the data](#download-the-data)
 3. [How to handle the containers](#how-to-handle-the-containers)
 4. [Tutorial](#tutorial)
-5. [Resources](#resources)
-6. [References](#references)
+5. [Bonus questions](#bonus-questions)
+6. [Resources](#resources)
+7. [References](#references)
 
 ## Introduction
 In this tutorial we will use public data from EVN-experiment
