@@ -80,7 +80,8 @@ gunzip ek048d.antab.gz
 We prepared both docker and apptainer containers for your convencience. They contain all
 the software that you'll need.
 
-**Please make sure to have either of them on your laptop before the tutorial.**
+<span style="color:red"> **Please make sure to have either of them on your laptop before
+the tutorial.** </span>
 
 ### Docker
 - install docker following the [installation instructions](https://docs.docker.com/engine/install/)
