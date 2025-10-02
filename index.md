@@ -388,13 +388,13 @@ plotms(vis=CONT, gridrows=2, gridcols=3, xaxis='frequency', yaxis='phase',
        ydatacolumn='corrected')
 ```
 
-<img src="figures/ff-amp-corrected-pbass.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
+<img src="figures/ff-amp-corrected-bpass.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
 
 <a name="fig-6">**Figure 6**</a> - *Fully calibrated amplitudes of the fringe finder on
 all Effelsberg baselines. Compare this to [Figure 2](#fig-2). There is certainly room for
 improvement or more flagging but this is certainly "good enough".*
 
-<img src="figures/ff-phase-corrected-pbass.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
+<img src="figures/ff-phase-corrected-bpass.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
 
 <a name="fig-7">**Figure 7**</a> - *Same as [Figure 6](#fig-6) but for the phases. Now
 they are all flat.*
