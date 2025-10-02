@@ -65,7 +65,7 @@ First download the data from the EVN archive as indicated below. We'll need the 
 fitsidi files as well as the system temperature files and the automatically generated flag
 files.
 
-> **Ideally you download all of this before the tutorial.**
+**Ideally you download all of this before the tutorial.**
 
 In total you'll need some 35GB of free space on your laptop.
 
@@ -80,7 +80,7 @@ gunzip ek048d.antab.gz
 We prepared both docker and apptainer containers for your convencience. They contain all
 the software that you'll need.
 
-> **Please make sure to have either of them on your laptop before the tutorial.**
+**Please make sure to have either of them on your laptop before the tutorial.**
 
 ### Docker
 - install docker following the [installation instructions](https://docs.docker.com/engine/install/)
@@ -98,10 +98,12 @@ xhost +local:docker
 xhost +local:root
 ```
 
-- spin up the container to run things "interactively"
+- spin up the container to run things "interactively". Note here we name the container
+  `ftsky` but it is really the same one as that from the first tutorial which was name
+  `gmrt_data`. I.e. you can also just attach to the same container again.
 
 ```bash
-docker run -it --privileged -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 -v /tmp/.X11-unix:/tmp/.X11-unix --ipc=host -v $(pwd):/data <container-name>
+docker run -it --name ftsky --privileged -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 -v /tmp/.X11-unix:/tmp/.X11-unix --ipc=host -v $(pwd):/data apal52/radio-img
 ```
 
 - test if things are working correctly:
@@ -169,7 +171,7 @@ Let's do things step by step.
 
 ### Preliminary steps
 - to get the JIVE pipeline tables into casa; i.e. append the system temperature tables to
-the fitsidi files and also create a case-ready flag table.
+the fitsidi files and also create a `casa`-ready flag table.
 
 ```python
 run -i -e './add-jive-tables.py'
@@ -232,18 +234,21 @@ pass through different electronics, there are systematic offsets (aka delays) be
 the phases of each subband. Using a minute of data on a bright source -- here the fringe
 finder -- we'll correct for this offest.
 
-- take a look at phases and amplitudes of the fringe finder ([Figure 1](#fig-1) and
+- take a look at the **uncalibrated** phases and amplitudes of the fringe finder ([Figure 1](#fig-1) and
   [Figure 2](#fig-2))
 
 ```python
-plotms(vis=CONT, gridrows=4, gridcols=4, xaxis='channel', yaxis='amp', field='J0530+1331', timerange='15:02:00.0~15:03:00.0', avgtime='60', iteraxis='spw', coloraxis='baseline', correlation='RR, LL')
+plotms(vis=CONT, gridrows=4, gridcols=4,
+xaxis='channel', yaxis='amp', field='J0530+1331',
+timerange='15:02:00.0~15:03:00.0', avgtime='60',
+iteraxis='spw', coloraxis='baseline', correlation='RR, LL')
 ```
 <img src="figures/ff-phase-data.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
 
 <a name="fig-1">**Figure 1**</a> - *Uncalibrated phases of the fringe finder. Each panel
 is a different subband (IF) and the baselines are color coded. Slopes and offsets between
-bands are obvious. They are caused by instrumental delays and imperfections in of the
-correlator model*
+bands are obvious. They are caused by instrumental delays and imperfections in the
+correlator model.*
 
 <img src="figures/ff-amp-data.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
 
@@ -259,8 +264,7 @@ fringefit(vis=CONT, caltable='cont.sbd', timerange='15:02:00.0~15:03:00.0', soli
 - we apply the single band delay corrections to the fringe finder
 
 ```python
-applycal(vis=CONT, field='J0530+1331', gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd'],
-interp=['nearest','nearest,nearest', 'nearest'], parang=True)
+applycal(vis=CONT, field='J0530+1331', gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd'], interp=['nearest','nearest,nearest', 'nearest'], parang=True)
 ```
 
 - and take a look at the outcome ([Figure 3](#fig-3))
@@ -280,13 +284,11 @@ Now we can move ahead and solve for delays and rates across the entire observati
 the phase calibrator.
 
 - We run global fringe fit, applying all previous calibration on the fly and ask for one
-  solution per phase calibrator scan (note how we average over all IFs to increase increase the
+  solution per phase calibrator scan (note how we average over all IFs to increase the
   signal-to-noise by passing `combine='spws'`):
 
 ```python
-fringefit(vis=CONT, caltable='cont.mbd', field='J0502+2516, J0530+1331', solint='120s',
-zerorates=False, refant='EF', minsnr=7, combine='spw', gaintable=['cal.gcal', 'cal.tsys',
-'cont.sbd'], interp=['nearest','nearest,nearest', 'nearest'], parang=True)
+fringefit(vis=CONT, caltable='cont.mbd', field='J0502+2516, J0530+1331', solint='120s', zerorates=False, refant='EF', minsnr=7, combine='spw', gaintable=['cal.gcal', 'cal.tsys', 'cont.sbd'], interp=['nearest','nearest,nearest', 'nearest'], parang=True)
 ```
 
 - apply the fringe fit calibration (we have to specify how to apply the global fringe fit
@@ -300,9 +302,7 @@ applycal(vis=CONT, field='J0502+2516, J0530+1331', gaintable=['cal.gcal', 'cal.t
   generate one plot per scan to see if there are scans with failed calibration.
 
 ```python
-plotms(vis=CONT, gridrows=4, gridcols=4, xaxis='channel', yaxis='phase',
-field='J0502+2516', avgtime='60', iteraxis='scan', coloraxis='corr', correlation='RR, LL',
-ydatacolumn='corrected', avgchannel='8', antenna='EF')
+plotms(vis=CONT, gridrows=4, gridcols=4, xaxis='channel', yaxis='phase', field='J0502+2516', avgtime='60', iteraxis='scan', coloraxis='corr', correlation='RR, LL',ydatacolumn='corrected', avgchannel='8', antenna='EF')
 ```
 
 <img src="figures/pcal-phase-corrected.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
