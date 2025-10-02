@@ -35,7 +35,7 @@ onload = function(){
 Welcome! This page hosts the VLBI tutorial material and guide from the FTSky
 Workshop, held at on 06–10 October 2025.
 
-I recommend to simply clone this repository and then work in the `tutorial` directory:
+I recommend to <span style="color:red">simply clone this repository</span> and then work in the `tutorial` directory:
 
 ```bash
 cd /somewhere/on/your/laptop
