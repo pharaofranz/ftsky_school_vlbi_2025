@@ -32,24 +32,24 @@ onload = function(){
 
 # FTSky VLBI workshop 2025
 
-Welcome! This page hosts the **tutorial materials** and **guides** from the **FTSky
+Welcome! This page hosts the **VLBI tutorial materials** and **guides** from the **FTSky
 Workshop**, held at **ICTS Bengaluru** on **06–10 October 2025**.
 
 I recommend to simply clone this repository and then work in the `tutorial` directory:
 
 ```bash
-cd /somewhere/on/you/laptop
+cd /somewhere/on/your/laptop
 git clone https://github.com/pharaofranz/ftsky_school_vlbi_2025.git
 cd ftsky_school_vlbi_2025/tutorial
 ```
 
-If you prefer to work in a different directory, just make sure to copy the python script
+If you prefer to work in a different directory, just make sure to copy the python scripts
 in the `tutorial` directory across.
 
 ## On this page
 1. [Introduction](#introduction)
 2. [Download the data](#download-the-data)
-3. [How to handle the containers](#How-to-handle-the-containers)
+3. [How to handle the containers](#how-to-handle-the-containers)
 4. [Tutorial](#tutorial)
 5. [Resources](#resources)
 6. [References](#references)
@@ -64,7 +64,9 @@ interpretation can be read up on in [Nimmo et al. 2022](#nimmo2022).
 First download the data from the EVN archive as indicated below. We'll need the correlated
 fitsidi files as well as the system temperature files and the automatically generated flag
 files.
+
 **Ideally you download all of this before the tutorial.**
+
 In total you'll need some 35GB of free space on your laptop.
 
 ```bash
