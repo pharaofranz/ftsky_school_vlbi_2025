@@ -507,8 +507,6 @@ burst 5 here). The combination of bursts occuring at different times leads to a 
 filled uv-plane and, eventually, gives us a single peak in the dirty image. This is the
 precise localisation of the target source.*
 
-```
-
 ## Bonus questions
 - In [Figure 9](#fig-9) we see that two baselines dominate the cross pattern. Which
   baselines are these and how would you figure it out?
