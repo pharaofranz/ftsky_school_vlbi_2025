@@ -494,6 +494,7 @@ for i in range(1,14):
   called `burst[1-13].image.image` (see [Figure 9](#fig-9) for the dirty image of Burst 1.)
 
 ```python
+# to open all 13 bursts in one go
 from natsort import natsort_keygen
 burst_images = sorted(glob.glob('burst*.image.image'), key=natsort_keygen())
 imview(burst_images)
@@ -504,6 +505,7 @@ imview(burst_images)
 <a name="fig-9">**Figure 9**</a> - *Dirty image of burst 1. Note the cross pattern that
 shows that the signal is dominated by two baselines.*
 
+- in the viewer you can animate the 13 bursts to loop through.
 - As you can see, we do not get a clear localisation with just a single burst. What we see
   is the cross-pattern of the different baselines, dominated by one or two of them.
 - What you might also see, is that the cross-pattern "rotates" in time -- this is
