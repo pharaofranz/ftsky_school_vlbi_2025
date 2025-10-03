@@ -1,8 +1,8 @@
 from casavlbitools import fitsidi
 from natsort import natsort_keygen
 import glob
-cont_idifiles = sorted(glob.glob('ek048d_1_*IDI*'))
-gate_idifiles = sorted(glob.glob('ek048d_2_*IDI*'))
+cont_idifiles = sorted(glob.glob('ek048d_1_*IDI*'), key=natsort_keygen())
+gate_idifiles = sorted(glob.glob('ek048d_2_*IDI*'), key=natsort_keygen())
 try:
     fitsidi.append_tsys('ek048d.antab', cont_idifiles)
 except:
