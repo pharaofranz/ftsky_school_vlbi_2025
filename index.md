@@ -32,8 +32,8 @@ onload = function(){
 
 # FTSky VLBI workshop 2025
 
-Welcome! This page hosts the VLBI tutorial material and guide from the FTSky
-Workshop, held at on 06–10 October 2025.
+Welcome! This page hosts the VLBI tutorial material and guide from the [FTSky
+Training School](https://www.icts.res.in/event/page/32854), held at on 06–10 October 2025.
 
 I recommend to <span style="color:red">simply clone this repository</span> and then work in the `tutorial` directory:
 
@@ -157,6 +157,9 @@ you've successfully entered into an interactive casa session by running:
 
 ```bash
 casa
+
+# and change into the directory where all our data are (it was mounted into /data)
+cd /data
 ```
 
 This should give you the familiar ipython prompt and a logging window should have popped up.
@@ -200,6 +203,7 @@ importfitsidi(fitsidifile=cont_idifiles, vis=CONT, constobsid=True, scanreindexg
 importfitsidi(fitsidifile=gate_idifiles, vis=GATE, constobsid=True, scanreindexgap_s=15.0)
 ```
 
+- Do take a look at what's happening in the logger while the above is running.
 - We can take a look and get a summary of the observations in the following way:
 
 ```python
@@ -210,8 +214,8 @@ listobs(vis=GATE, overwrite=True, listfile='listobs_gate.txt')
 - and take a look via
 
 ```bash
-less listobs_cont.txt
-less listobs_gate.txt
+less listobs_cont.txt  # this contains pretty much all the data
+less listobs_gate.txt  # here you will see only the gated data; in total there were 13 bursts that now appear as separate scans of 2s duration each
 ```
 
 - let's apply some flagging -- we're getting rid of the band edges, the autocorrelations,
@@ -223,7 +227,12 @@ run -i -e './flagging.py'
 
 - Now we'll apply some a-priori amplitude calibration using the provided system
   temperature curves. The idea here is to get the fluxes of the sources right based on
-  the known SEFDs of each station
+  the known SEFDs of each station and the measured system temperature at the time.
+
+> **NOTE:** You will see a lot messages on the prompt telling you that "Tsys for ant id=XY
+> in spw YX are all negative or zero. This is fine because not all antennas observed all
+> subbands. We have a so-called mixed-band setup where different antennas cover different
+> parts of the band. Only Effelsberg, Onsala and Torun completely overlap.
 
 ```python
 run -i -e './apriori-cal.py'
@@ -326,8 +335,8 @@ applycal(vis=CONT, field='J0502+2516, J0530+1331',
   generate one plot per scan to see if there are scans with failed calibration.
 
 ```python
-plotms(vis=CONT, gridrows=4, gridcols=4, xaxis='channel', yaxis='phase',
-       field='J0502+2516', avgtime='60', iteraxis='scan', coloraxis='corr',
+plotms(vis=CONT, gridrows=4, gridcols=4, xaxis='frequency', yaxis='phase',
+       field='J0502+2516', avgtime='60', iteraxis='scan', coloraxis='spw',
        correlation='RR, LL',ydatacolumn='corrected',
        avgchannel='8', antenna='EF')
 ```
@@ -336,12 +345,14 @@ plotms(vis=CONT, gridrows=4, gridcols=4, xaxis='channel', yaxis='phase',
 
 <a name="fig-4">**Figure 4**</a> - *Calibrated phases per scan for the phase calibrator on
 all baselines involving the Effelsberg telescope. The phases are flat across the band and
-scattered around zero. The color-coding is per polarisation.*
+scattered around zero. The color-coding is per subband (IF). It seems there is a
+particular frequency range affected by RFI -- try and flag it later on to improve the calibration.*
 
 
 #### Bandpass calibration
 
-As each subband has a certain spectral response, we will create a bandpass calibration table,
+As each subband has a certain spectral response (see [Figure 2](#fig-2)). However, we
+expect our calibrators to have a flat spectrum across the band. Therefore,  we will create a bandpass calibration table,
 again running on a bright, flat-spectrum source such as our fringe finder:
 
 ```python
@@ -358,7 +369,7 @@ bandpass(vis=CONT, caltable='cont.bpass', field='J0530+1331',
 
 ```python
 plotms(vis='cont.bpass', xaxis='frequency', yaxis='amp',
-       coloraxis='corr', iteraxis='antenna', gridrows=2, gridcols=4)
+       coloraxis='corr', iteraxis='antenna', gridrows=2, gridcols=3)
 ```
 
 <img src="figures/bpass.png" alt="drawing" style="width: 90%;height: auto;" class="center"/>
@@ -382,7 +393,7 @@ applycal(vis=CONT, field='J0502+2516, J0530+1331',
   ([Figure 6](#fig-6) and [Figure 7](#fig-7)).
 
 ```python
-plotms(vis=CONT, gridrows=2, gridcols=3, xaxis='frequency', yaxis='phase',
+plotms(vis=CONT, gridrows=2, gridcols=3, xaxis='frequency', yaxis='amp',
        field='J0530+1331',timerange='15:02:00.0~15:03:00.0',
        avgtime='60', iteraxis='baseline', coloraxis='spw',
        correlation='RR', antenna='EF',
@@ -424,7 +435,7 @@ applycal(vis=CONT, field='J0501+2530',
   measurement set that only contains the calibrated data. We also apply some averaging on the fly:
 
 ```python
-split(vis=CONT, outputvis='chksrc.ms', field='J0501+2530',
+split(vis=CONT, outputvis=CHKSRC, field='J0501+2530',
       correlation='RR, LL', datacolumn='corrected',
       keepflags=False,
       width='4', timebin='32s')
@@ -442,6 +453,10 @@ tclean(vis=CHKSRC, imagename='chksrc.image', specmode='mfs', nterms=1,
 
 - Take a look at the output with `imview`. The file you'll want to look at is called
   `chksrc.image.image` ([Figure 8](#fig-8))
+
+```python
+imview('chksrc.image.image')
+```
 
 <img src="figures/chksrc-CLEANed.png" alt="drawing" style="width: 60%;height: auto;" class="center"/>
 
@@ -478,6 +493,11 @@ for i in range(1,14):
 - you can again take a look at the individual bursts with `imview`. The files will be
   called `burst[1-13].image.image` (see [Figure 9](#fig-9) for the dirty image of Burst 1.)
 
+```python
+from natsort import natsort_keygen
+burst_images = sorted(glob.glob('burst*.image.image'), key=natsort_keygen())
+imview(burst_images)
+```
 
 <img src="figures/burst1_dirty.png" alt="drawing" style="width: 60%;height: auto;" class="center"/>
 
@@ -507,14 +527,21 @@ burst 5 here). The combination of bursts occuring at different times leads to a 
 filled uv-plane and, eventually, gives us a single peak in the dirty image. This is the
 precise localisation of the target source.*
 
-## Bonus questions
+## Bonus questions/tasks
 - In [Figure 9](#fig-9) we see that two baselines dominate the cross pattern. Which
   baselines are these and how would you figure it out?
 - Make the same image as [Figure 10](#fig-10) but including all baselines. In what way are
   the images different/similar and why?
 - Why is the check-source in the middle of the created figure ([Figure 8](#fig-8)) while
   the FRB-source is not ([Figure 10](#fig-10))?
-
+- For the fun of it you can also image the phase calibrator source
+  (`field='J0502+2516,'`). I would suggest you restrict yourself to 3 scans spread across
+  the obsevation as imaging all scans at once takes a long time in Casa.
+- You can also try and create a deep image of the target field by applying all calibration
+  to the target (`field='R67_D'`) in the measurement set that contains all the data
+  (i.e. the one we referred to as `CONT`); then split out the target and image with
+  `tclean`. Note that the imaging process might take a long time as it's a fair bit of
+  data. Maybe try this out on one scan only at first.
 
 ## Resources
 The calibration steps above are largely just following what other tutorials have done
