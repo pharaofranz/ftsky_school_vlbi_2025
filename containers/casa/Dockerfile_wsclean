@@ -1,5 +1,4 @@
 # -------------------------
-# Samit Pal -Imaging Dockerfile
 # Ubuntu 22.04 base with scientific and radio astronomy tools
 # -------------------------
 
@@ -53,7 +52,10 @@
             libboost-program-options-dev libboost-system-dev \
             libcfitsio-dev libfftw3-dev libgsl-dev \
             libhdf5-dev liblapack-dev libopenmpi-dev \
-            libpython3-dev pkg-config  
+            libpython3-dev pkg-config \
+            curl \
+            unzip && \
+        rm -rf /var/lib/apt/lists/*
     
     # --- Python libraries for science and formatting ---
     RUN pip3 install \
@@ -68,8 +70,9 @@
             'numpy<2' \
             pytest \
             scipy \
-            tqdm 
-
+            tqdm \
+            gdown \
+        ;
     
     # # --- Download LOFAR beam coefficients ---
     # RUN mkdir -p /coeffs/lobes && \
@@ -114,7 +117,7 @@
         cd /wsclean && \
         mkdir build && cd build && \
         cmake $CMAKE_ARGS .. && \
-        make install -j 2 && cd / && rm -rf /wsclean
+        make install -j$(nproc) && cd / && rm -rf /wsclean
     
     # --- [TAG: CASA] Download and install CASA (radio astronomy suite) ---
     RUN wget --no-check-certificate https://casa.nrao.edu/download/distro/casa/release/rhel/casa-6.6.0-20-py3.8.el7.tar.xz && \
@@ -123,17 +126,50 @@
     
     # Add FUSE and readline support for GUI tools and better terminal interaction
     RUN apt-get update && \
-        apt-get install -y fuse libfuse2 libreadline8 libreadline-dev rlwrap && \
+        apt-get install -y fuse libfuse2 libreadline8 libreadline-dev rlwrap curl && \
         rm -rf /var/lib/apt/lists/*
+    
+    # Install Python packages inside CASA so they are available at runtime
+    RUN /casa-6.6.0-20-py3.8.el7/bin/pip3 install astropy natsort
+    
+    # Clone casa-vlbi repository and add to PYTHONPATH
+    RUN git clone https://github.com/jive-vlbi/casa-vlbi
+    
+    # --- [TAG: CARTA] Install CARTA AppImage ---
+    RUN mkdir -p /data && \
+        cd /data && \
+        wget https://github.com/CARTAvis/carta/releases/latest/download/carta.AppImage.x86_64.tgz && \
+        tar -xzf carta.AppImage.x86_64.tgz && \
+        chmod +x carta-x86_64.AppImage && \
+        rm carta.AppImage.x86_64.tgz
+    
+    # --- [TAG: DATA] Download tutorial data from Google Drive ---
+    RUN cd /data && \
+        gdown https://drive.google.com/uc?id=1Jq7XJScDVXbW_zRzDw6OEBahLpjTe5TF && \
+        echo "Data downloaded to /data"
+    
+    # --- [TAG: SHELL] Set bash as default shell and configure it ---
+    RUN chsh -s /bin/bash && \
+        echo 'export PS1="\u@\h:\w\$ "' >> /root/.bashrc && \
+        echo 'alias ll="ls -la"' >> /root/.bashrc && \
+        echo 'alias carta="APPIMAGE_EXTRACT_AND_RUN=1 /data/carta-x86_64.AppImage"' >> /root/.bashrc && \
+        echo 'export APPIMAGE_EXTRACT_AND_RUN=1' >> /root/.bashrc && \
+        echo 'set -o emacs' >> /root/.bashrc && \
+        echo 'bind "set completion-ignore-case on"' >> /root/.bashrc
     
     # --- [TAG: ENVIRONMENT] Add CASA to PATH and set locale ---
     ENV PATH="/casa-6.6.0-20-py3.8.el7/bin:$PATH"
     ENV LC_ALL=C.UTF-8
+    ENV SHELL=/bin/bash
+    ENV PYTHONPATH=""
+    ENV PYTHONPATH="/casa-vlbi:${PYTHONPATH}"
     
-    CMD ["/bin/sh"]
+    # Set bash as default shell and enable proper signal handling
+    SHELL ["/bin/bash", "-c"]
+    CMD ["/bin/bash"]
     
     LABEL Author="FTSky School, Initial Version by Samit, Modified by Arpan" \
-          Version="1.0" \
-          Description="Docker container  for imaging with WSClean, CASA"
-    # ---- END Dockerfile ----
+          Version="1.1" \
+          Description="Docker container for imaging with WSClean, CASA, and CARTA"
     
+    # ---- END Dockerfile ----
