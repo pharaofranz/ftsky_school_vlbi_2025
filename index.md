@@ -96,8 +96,6 @@ docker pull apal52/radio-img
 
 ```bash
 xhost +local:docker
-# may also need
-xhost +local:root
 ```
 
 - spin up the container to run things "interactively". Note here we name the container
