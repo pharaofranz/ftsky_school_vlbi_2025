@@ -101,11 +101,16 @@ xhost +local:root
 ```
 
 - spin up the container to run things "interactively". Note here we name the container
-  `ftsky` but it is really the same one as that from the first tutorial which was name
-  `gmrt_data`. I.e. you can also just attach to the same container again.
+  `vlbi-tutorial` -- **this is deliberate** because we want to mount a different directory into '/data'.
 
 ```bash
-docker run -it --name ftsky --privileged -e DISPLAY=$DISPLAY \
+# first go to where you downloaded the data to; this should be the 'tutorial' directory
+# of this very git repo that you cloned
+cd /path/to/ftsky_school_vlbi_2025/tutorial
+
+# then spin up the container but give it a new name
+docker run -it --name vlbi-tutorial \
+   --privileged -e DISPLAY=$DISPLAY \
    -e QT_X11_NO_MITSHM=1 -v /tmp/.X11-unix:/tmp/.X11-unix --ipc=host \
    -v $(pwd):/data apal52/radio-img
 ```
