@@ -171,7 +171,7 @@ We'll run the calibration and imaging step by step but in case you'd like to jus
 the end run the full calibration script like so in casa:
 
 ```python
-run -i -e './full-cal.py'
+run -i -e './full-run.py'
 ```
 
 This will skip all of the intermediate plots and get you calibrated CLEAN images of the
